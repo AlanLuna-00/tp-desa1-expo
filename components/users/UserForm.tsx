@@ -3,7 +3,6 @@ import { ThemedView } from "@/components/themed-view";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -48,22 +47,15 @@ export function UserForm({
   }, [success]);
 
   const validateEmail = (email: string) => {
-    if (!email.trim()) return true; // Email es opcional
+    if (!email.trim()) return false;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
+  const isEmailInvalid = email.trim() !== "" && !validateEmail(email);
+  const isFormValid = name.trim() && job.trim() && validateEmail(email);
+
   const handleSubmit = () => {
-    if (!name.trim() || !job.trim()) {
-      Alert.alert("Error", "Por favor completa los campos requeridos");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      Alert.alert("Error", "Por favor ingresa un email válido");
-      return;
-    }
-
     onSubmit({
       name: name.trim(),
       job: job.trim(),
@@ -79,7 +71,9 @@ export function UserForm({
       </ThemedText>
 
       <ThemedView style={styles.form}>
-        <ThemedText style={styles.label}>Nombre</ThemedText>
+        <ThemedText style={styles.label}>
+          Nombre <ThemedText style={styles.required}>*</ThemedText>
+        </ThemedText>
         <TextInput
           style={styles.input}
           value={name}
@@ -89,7 +83,9 @@ export function UserForm({
           editable={!isLoading}
         />
 
-        <ThemedText style={styles.label}>Job (Rol/Puesto)</ThemedText>
+        <ThemedText style={styles.label}>
+          Job (Rol/Puesto) <ThemedText style={styles.required}>*</ThemedText>
+        </ThemedText>
         <TextInput
           style={styles.input}
           value={job}
@@ -99,9 +95,14 @@ export function UserForm({
           editable={!isLoading}
         />
 
-        <ThemedText style={styles.label}>Email (Opcional)</ThemedText>
+        <ThemedText style={styles.label}>
+          Email <ThemedText style={styles.required}>*</ThemedText>
+        </ThemedText>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            isEmailInvalid && styles.inputError,
+          ]}
           value={email}
           onChangeText={setEmail}
           placeholder="usuario@ejemplo.com"
@@ -110,6 +111,11 @@ export function UserForm({
           autoCapitalize="none"
           keyboardType="email-address"
         />
+        {isEmailInvalid && (
+          <ThemedText style={styles.errorText}>
+            Por favor ingresa un email válido
+          </ThemedText>
+        )}
 
         <ThemedText style={styles.label}>URL de Imagen (Opcional)</ThemedText>
         <TextInput
@@ -132,9 +138,12 @@ export function UserForm({
         )}
 
         <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (isLoading || !isFormValid) && styles.buttonDisabled,
+          ]}
           onPress={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || !isFormValid}
         >
           {isLoading ? (
             <ThemedView style={styles.buttonContent}>
@@ -166,6 +175,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
   },
+  required: {
+    color: "#c62828",
+    fontSize: 14,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#e0e0e0",
@@ -174,6 +187,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#fff",
     minHeight: 44,
+  },
+  inputError: {
+    borderColor: "#c62828",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#c62828",
+    marginTop: -8,
+    marginBottom: 4,
   },
   button: {
     backgroundColor: "#0a7ea4",
